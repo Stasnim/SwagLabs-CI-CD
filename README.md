@@ -1,43 +1,72 @@
-### Objective
+# qa-online-shop-fsljgi
 
-Your assignment is to write automated test cases for an online shop to test the core functionality of the site.
+End-to-end tests for [SauceDemo](https://www.saucedemo.com) using Playwright + TypeScript.
 
-### Brief
+## Structure
 
-The product team at Frontline Data Solutions has come up with a [simple MVP for an online shop](https://qa-challenge.codesubmit.io). Help the team get confidence in further development by automatically testing the most critical features of the app by doing the following:
+```
+qa-online-shop-fsljgi/
+├── .github/workflows/       # CI/CD Automation
+│   └── playwright.yml       # GitHub Actions pipeline configuration
+├── src/
+│   ├── fixtures/
+│   │   └── users.ts         # User credential profiles
+│   ├── pages/               # Page Object Model encapsulation layer
+│   │   ├── LoginPage.ts
+│   │   ├── InventoryPage.ts
+│   │   ├── ProductDetailPage.ts
+│   │   ├── CartPage.ts
+│   │   └── CheckoutPage.ts    
+│   └── types/
+│       └── index.ts         # Global TypeScript interface definitions
+├── tests/
+│   ├── setup/
+│   │   └── auth.setup.ts    # Global multi-user session caching orchestrator
+│   └── ui/                  # Feature-driven specification layer
+│       ├── login.spec.ts
+│       ├── inventory.spec.ts
+│       ├── product-detail.spec.ts
+│       ├── cart.spec.ts
+│       ├── checkout.spec.ts
+│       ├── problem-user.spec.ts
+│       └── performance-user.spec.ts
+├── .auth/                   # Encrypted storage state cache directory (gitignored)
+├── .env.example             # Environment variable template
+├── playwright.config.ts     # Global runner orchestration & cross-browser targets
+└── tsconfig.json            # Strict-type compiler configurations
+```
 
-### Tasks
+## Quick start
 
--   Compile a list of several testable user flows, cases, or scenarios. This doesn't have to cover every possible real-life case; please focus on what you think is most fundamental (e.g., sign in).
+```bash
 
-| Site        | URL                                |
-| ----------- | ---------------------------------- |
-| Online Shop | https://qa-challenge.codesubmit.io |
+npm install
+npx playwright install --with-deps
 
-Make sure to test scenarios for all provided user accounts.
+npm test                        # all tests, all browsers
+npm run test:standard           # @standard tag only
+npm run test:problem            # @problem tag only
+npm run test:performance        # @performance tag only
+npm run test:locked             # @locked tag only
+npm run test:headed             # watch it run
+npm run test:report             # open HTML report
+```
 
-| User                    | Description                                                             |
-| ----------------------- | ----------------------------------------------------------------------- |
-| standard_user           | The site should work as expected for this user                          |
-| locked_out_user         | User is locked out and should not be able to log in.                    |
-| problem_user            | Images are not loading for this user.                                   |
-| performance_glitch_user | This user has high loading times. Does the site still work as expected? |
+## Test users
 
--   Implement automated browser tests for all flows. Use any testing technology you'd like – Cypress, Selenium, or any other you think would work well
+| User | Tag | Behaviour |
+|---|---|---|
+| `standard_user` | `@standard` | Everything works |
+| `locked_out_user` | `@locked` | Login rejected |
+| `problem_user` | `@problem` | Images broken; rest of site works |
+| `performance_glitch_user` | `@performance` | Slow; site still fully functional |
 
-### Evaluation Criteria
+## Key design decisions
 
--   **Automation & QA** best practices
--   Show us your work through your commit history
--   We're looking for you to produce working code, with enough room to demonstrate how to structure components in a small program
--   Completeness: did you complete the features?
--   Correctness: does the functionality act in sensible, thought-out ways?
--   Maintainability: is it written in a clean, maintainable way?
+**No login in every test** — `tests/setup/auth.setup.ts` logs in once per user and saves `localStorage` to `.auth/`. Tests load that saved state instantly. This is Playwright's recommended pattern.
 
-### CodeSubmit
+**`fullyParallel: true`** — SauceDemo auth is in `localStorage` (per browser context), so parallel workers never share state. Tests run simultaneously without interference.
 
-Please organize, design, test and document your code as if it were going into production - then push your changes to the master branch. After you have pushed your code, you may submit the assignment on the assignment page.
+**`resetAppState()` in `afterEach`** — prevents cart state leaking between tests in the same worker.
 
-**Have fun building!** 🚀
-
-The Frontline Data Solutions Team
+**`[DEFECT]` prefix** — broken-image tests are explicitly labelled so they're easy to find in reports and won't be confused with genuine test failures.
