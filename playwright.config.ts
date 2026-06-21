@@ -23,9 +23,18 @@ export default defineConfig({
   timeout: 30_000,
   expect:  { timeout: 8_000 },
 
+  // 🛠️ UPDATED THIS SECTION ONLY
   reporter: [
     ["list"],
     ["html", { outputFolder: "reports/html", open: "never" }],
+    [
+      "playwright-prometheus-remote-write-reporter",
+      {
+        serverUrl: "http://prometheus-server.monitoring.svc.cluster.local:9090/api/v1/write",
+        prefix: "playwright_",
+        labels: { env: "ci", project: "swaglabs" }
+      }
+    ]
   ],
 
   use: {
@@ -39,13 +48,11 @@ export default defineConfig({
   },
 
   projects: [
-    
     {
       name: "setup",
       testMatch: /setup\/auth\.setup\.ts/,
       fullyParallel: true,
     },
-
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
