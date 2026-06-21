@@ -11,6 +11,7 @@ COPY package*.json ./
 RUN npm ci
 
 # 5. Copy the rest of your application code
+
 COPY . .
 
 # 6. Command to execute tests when the container starts
