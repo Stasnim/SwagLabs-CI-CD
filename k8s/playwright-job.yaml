@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: swaglabs-e2e-tests-v2   # Changed the name because K8s jobs cannot be reused with the same name
+spec:
+  template:
+    spec:
+      containers:
+        - name: playwright
+          image: ghcr.io/stasnim/swaglabs-ci-cd:latest
+          imagePullPolicy: Always
+          # Overriding the default command to restrict workers to 2 or 3 instead of 8
+          command: ["npx", "playwright", "test", "--workers=2"]
+          resources:
+            limits:
+              cpu: "2"
+              memory: "4Gi"     # Bumped up from 2Gi
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      restartPolicy: Never
+  backoffLimit: 0
